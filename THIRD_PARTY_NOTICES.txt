@@ -1,0 +1,39 @@
+AI 영상·사진 업스케일러 — 제3자 구성 요소 고지
+
+이 GitHub 저장소에는 저작권자가 직접 작성한 코드와 문서만 들어 있습니다. 아래의 소프트웨어와
+AI 모델은 저장소에 포함되어 있지 않으며, 각 제공처에서 직접 받아 사용합니다.
+각 구성 요소의 저작권은 해당 저작자에게 있고, 각자의 라이선스를 따릅니다.
+LICENSE.txt 제3조(금지 행위)는 아래 구성 요소에는 적용되지 않습니다.
+
+[소프트웨어]
+- Python 3.11                       PSF License                  https://www.python.org/
+- FFmpeg                            빌드에 따라 LGPL 또는 GPL     https://ffmpeg.org/
+    · 본 프로그램은 FFmpeg 를 별도의 외부 프로그램으로 실행합니다.
+- Qt 6 / PySide6                    LGPL v3                      https://www.qt.io/ , https://pypi.org/project/PySide6/
+- OpenVINO                          Apache License 2.0           https://github.com/openvinotoolkit/openvino
+- ONNX Runtime                      MIT License                  https://github.com/microsoft/onnxruntime
+- ONNX                              Apache License 2.0           https://github.com/onnx/onnx
+- OpenCV (opencv-python)            Apache License 2.0 외         https://github.com/opencv/opencv-python
+- NumPy                             BSD 3-Clause 외               https://numpy.org/
+
+[AI 모델]
+- Real-ESRGAN (General v3, x4plus, x2plus)   BSD 3-Clause
+    https://github.com/xinntao/Real-ESRGAN
+    · vup/esrgan.py 는 공개된 네트워크 구조(SRVGGNetCompact, RRDBNet)에 맞춰 ONNX 그래프를 구성합니다.
+- RIFE v4.26 / v4.22 lite                    MIT
+    https://github.com/hzwer/Practical-RIFE
+    · ONNX 변환본 출처: https://github.com/AmusementClub/vs-mlrt (저장소 라이선스 GPL v3)
+- YuNet                                      MIT
+    https://github.com/opencv/opencv_zoo/tree/main/models/face_detection_yunet
+- GFPGAN 1.4 (선택 사항)                      Apache 2.0, 단 제3자 구성 요소 예외 있음
+    https://github.com/TencentARC/GFPGAN
+    · GFPGAN 라이선스에는 NVIDIA 라이선스(비상업 조건)와 CC BY-NC-SA 4.0 을 따르는 구성 요소가
+      함께 표시되어 있고, 학습에 쓰인 FFHQ 데이터셋도 비상업 조건의 이미지를 포함합니다.
+      상업적 이용에 쓸 수 있는지는 확인되지 않았으므로 개인적·비상업적 용도로만 사용하십시오.
+    · ONNX 변환본 출처: https://github.com/facefusion/facefusion-assets (라이선스 표시 없음)
+
+[참고한 공개 수치]
+- vup/face.py 의 FFHQ 512 얼굴 기준 좌표는 facexlib(MIT)에서 쓰는 표준 값입니다.
+  https://github.com/xinntao/facexlib
+
+위 목록은 작성 시점 기준입니다. 각 라이선스의 정확한 조건은 원본 저장소의 원문을 따릅니다.

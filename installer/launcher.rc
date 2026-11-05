@@ -1,0 +1,32 @@
+#include <winver.h>
+
+1 ICON "app.ico"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     @MAJOR@,@MINOR@,@PATCH@,0
+PRODUCTVERSION  @MAJOR@,@MINOR@,@PATCH@,0
+FILEFLAGSMASK   0x3fL
+FILEFLAGS       0x0L
+FILEOS          VOS_NT_WINDOWS32
+FILETYPE        VFT_APP
+FILESUBTYPE     0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "041204B0"
+        BEGIN
+            VALUE "CompanyName",      "최승훈"
+            VALUE "FileDescription",  "AI 영상·사진 업스케일러"
+            VALUE "FileVersion",      "@VERSION@"
+            VALUE "InternalName",     "AIUpscaler"
+            VALUE "LegalCopyright",   "Copyright (c) 2026 최승훈. All rights reserved. 무단 수정·배포 금지."
+            VALUE "OriginalFilename", "AIUpscaler.exe"
+            VALUE "ProductName",      "AI 영상·사진 업스케일러"
+            VALUE "ProductVersion",   "@VERSION@"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0412, 1200
+    END
+END

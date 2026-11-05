@@ -1,0 +1,27 @@
+# 가상환경·빌드 결과
+.venv/
+build/
+dist/
+release/
+__pycache__/
+*.pyc
+
+# 사용자 데이터 (설정·작업 캐시·오류 기록·내 프리셋)
+config.json
+cache/
+presets/
+
+# AI 모델과 실행 파일 (제3자 저작물이라 저장소에 넣지 않음)
+models/
+bin/
+runtime/
+*.onnx
+*.npz
+*.pth
+*.exe
+*.dll
+*.pyd
+
+# 문서: 사용법은 GitHub Wiki 로 관리, 개발자 안내는 개인 작업 기록
+사용법.md
+개발자_안내.md
