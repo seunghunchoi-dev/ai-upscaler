@@ -379,6 +379,7 @@ def apply_theme(app):
         (QPalette.ColorRole.Text, TEXT), (QPalette.ColorRole.Button, RAISED),
         (QPalette.ColorRole.ButtonText, TEXT), (QPalette.ColorRole.Highlight, ACCENT),
         (QPalette.ColorRole.HighlightedText, "#ffffff"), (QPalette.ColorRole.ToolTipBase, RAISED),
+        (QPalette.ColorRole.Link, ACCENT),
         (QPalette.ColorRole.ToolTipText, TEXT), (QPalette.ColorRole.PlaceholderText, FAINT),
     ):
         pal.setColor(role, QColor(color))

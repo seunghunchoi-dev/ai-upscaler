@@ -35,7 +35,7 @@ Set-Content (Join-Path $rt "python$tag._pth") "python$tag.zip`r`n.`r`nLib\site-p
 Write-Host "[2/6] Python packages"
 & $devPy -m pip install --disable-pip-version-check --no-warn-script-location -q `
     --target $sp --only-binary=:all: --platform win_amd64 --python-version $PyVer --implementation cp `
-    numpy opencv-python openvino onnx onnxruntime-directml PySide6-Essentials pip
+    -r (Join-Path $root "requirements.txt") pip
 if ($LASTEXITCODE -ne 0) { throw "pip install failed" }
 
 Write-Host "[3/6] Trimming unused parts"

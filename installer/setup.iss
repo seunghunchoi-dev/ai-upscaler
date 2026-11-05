@@ -44,10 +44,13 @@ Name: "desktopicon"; Description: "바탕 화면에 바로 가기 만들기"; Gr
 [Files]
 Source: "{#StageDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
+[INI]
+Filename: "{app}\사용 설명서.url"; Section: "InternetShortcut"; Key: "URL"; String: "https://github.com/seunghunchoi-dev/ai-upscaler/wiki"
+
 [Icons]
 Name: "{group}\AI 업스케일러"; Filename: "{app}\AIUpscaler.exe"
 Name: "{group}\AI 업스케일러 (디버그 모드)"; Filename: "{app}\AIUpscaler-Debug.exe"; Comment: "오류가 날 때 콘솔에 내용을 보여 줍니다"
-Name: "{group}\사용법"; Filename: "{app}\사용법.md"
+Name: "{group}\사용 설명서 (Wiki)"; Filename: "{app}\사용 설명서.url"
 Name: "{group}\사용권 계약서"; Filename: "{app}\LICENSE.txt"
 Name: "{group}\제거"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\AI 업스케일러"; Filename: "{app}\AIUpscaler.exe"; Tasks: desktopicon
@@ -60,3 +63,6 @@ Filename: "{app}\AIUpscaler.exe"; Description: "지금 실행"; Flags: nowait po
 Type: filesandordirs; Name: "{app}\cache"
 ; 내장 Python 이 실행 중 만든 라이브러리 캐시(.pyc)까지 지우도록 runtime 폴더 전체 삭제
 Type: filesandordirs; Name: "{app}\runtime"
+; 사용자가 받은 얼굴 복원 모델과 바로 가기
+Type: filesandordirs; Name: "{app}\models"
+Type: files; Name: "{app}\사용 설명서.url"

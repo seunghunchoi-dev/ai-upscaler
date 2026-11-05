@@ -7,6 +7,7 @@
 #
 # 보호: 프로그램 코드(vup)는 Nuitka 로 C → 기계어 컴파일한 .pyd 하나로만 배포하고 .py 소스는 넣지 않는다.
 # MinGW 컴파일러가 한글 경로를 처리하지 못해서 C:\vupbuild (영문 경로)에서 컴파일한다.
+param([switch]$KeepStage)  # 테스트용: 설치 내용 폴더(build\installer_stage)를 지우지 않고 남긴다
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 $root = Split-Path $PSScriptRoot -Parent
@@ -63,8 +64,10 @@ Pop-Location
 
 # ── 5. 설치 내용 정리: 소스 제거, 컴파일본·실행 파일·계약서·라이선스 넣기 ──────
 Write-Host "[5/7] 설치 내용 정리"
+# FFmpeg 과 GFPGAN 은 라이선스 때문에 함께 배포하지 않는다 (프로그램의 [추가 구성요소] 에서 사용자가 받음)
 foreach ($x in "vup", "tools", "cache", "config.json", "실행.bat", "명령줄.bat", "NVIDIA_GPU_지원_설치.bat",
-               "설치파일_만들기.bat", "개발자_안내.md") {
+               "설치파일_만들기.bat", "개발자_안내.md", "사용법.md", "README.md", "requirements.txt",
+               "bin", "models\gfpgan_1.4.onnx") {
     $t = Join-Path $stage $x
     if (Test-Path $t) { Remove-Item -Recurse -Force $t }
 }
@@ -80,19 +83,16 @@ $nv = (Get-Content "$root\NVIDIA_GPU_지원_설치.bat" -Raw -Encoding utf8).Rep
 # 라이선스 원문: 각 패키지와 함께 배포된 파일을 그대로 복사
 $lic = New-Item -ItemType Directory -Force "$stage\licenses"
 Get-ChildItem "$stage\runtime\Lib\site-packages" -Directory -Filter *.dist-info | ForEach-Object {
-    $files = Get-ChildItem $_.FullName -Recurse -File | Where-Object { $_.Name -match '^(LICEN[CS]E|COPYING|NOTICE|AUTHORS)' }
+    $files = Get-ChildItem $_.FullName -Recurse -File | Where-Object { $_.Name -match '^(LICEN[CS]E|COPYING|NOTICE|AUTHORS|LGPL|GPL)' -or $_.Directory.Name -eq 'licenses' }
     if ($files) {
         $d = New-Item -ItemType Directory -Force (Join-Path $lic.FullName ($_.Name -replace '\.dist-info$', ''))
         $files | Copy-Item -Destination $d.FullName
     }
 }
 if (Test-Path "$stage\runtime\LICENSE.txt") { Copy-Item "$stage\runtime\LICENSE.txt" "$($lic.FullName)\Python-LICENSE.txt" }
-$ff = (Get-Command ffmpeg -ErrorAction SilentlyContinue).Source
-if ($ff) {
-    $real = (Get-Item $ff).Target; if (-not $real) { $real = $ff }
-    $ffl = Get-ChildItem (Split-Path (Split-Path $real)) -File -Filter "LICENSE*" -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($ffl) { Copy-Item $ffl.FullName "$($lic.FullName)\FFmpeg-LICENSE.txt" }
-}
+Copy-Item "$root\licenses\*" $lic.FullName
+$ort = New-Item -ItemType Directory -Force "$($lic.FullName)\onnxruntime"
+Copy-Item "$stageuntime\Lib\site-packages\onnxruntime\LICENSE", "$stageuntime\Lib\site-packages\onnxruntime\ThirdPartyNotices.txt" $ort.FullName
 
 # ── 6. 빌드 정보 + 그 버전의 소스 사본 (디버깅용, 설치 파일에는 넣지 않음) ────
 Write-Host "[6/7] 소스 사본 보관 → $release"
@@ -101,7 +101,7 @@ $zip = Join-Path $release "source_v$ver.zip"
 if (Test-Path $zip) { Remove-Item $zip }
 $tmpSrc = "$B\snapshot"; Remove-Item -Recurse -Force $tmpSrc -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force $tmpSrc | Out-Null
-foreach ($x in "vup", "installer", "tools") { robocopy "$root\$x" "$tmpSrc\$x" /E /XD __pycache__ /NFL /NDL /NJH /NJS /NP | Out-Null }
+foreach ($x in "vup", "installer", "tools", "licenses") { robocopy "$root\$x" "$tmpSrc\$x" /E /XD __pycache__ /NFL /NDL /NJH /NJS /NP | Out-Null }
 Copy-Item "$root\LICENSE.txt", "$root\THIRD_PARTY_NOTICES.txt", "$root\사용법.md", "$root\개발자_안내.md", "$root\실행.bat", "$root\명령줄.bat", "$root\설치파일_만들기.bat", "$root\NVIDIA_GPU_지원_설치.bat" $tmpSrc -ErrorAction SilentlyContinue
 Compress-Archive -Path "$tmpSrc\*" -DestinationPath $zip
 $info = @"
@@ -123,5 +123,6 @@ New-Item -ItemType Directory -Force $outDir | Out-Null
 if ($LASTEXITCODE -ne 0) { throw "설치 파일 만들기 실패" }
 $exe = Get-ChildItem $outDir -Filter "*v$ver.exe" | Select-Object -First 1
 # 중간 작업 폴더 정리 (약 1.6GB)
-Remove-Item -Recurse -Force $stage, "$B\snapshot", "$B\src", "$B\out" -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force "$B\snapshot", "$B\src", "$B\out" -ErrorAction SilentlyContinue
+if (-not $KeepStage) { Remove-Item -Recurse -Force $stage -ErrorAction SilentlyContinue }
 Write-Host ("완료: {0} ({1:N0} MB)" -f $exe.FullName, ($exe.Length / 1MB))

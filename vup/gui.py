@@ -18,16 +18,16 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-from PySide6.QtCore import QObject, QPointF, QRectF, QSize, Qt, QThread, QUrl, Signal, Slot
+from PySide6.QtCore import QObject, QPointF, QRectF, QSize, Qt, QThread, QTimer, QUrl, Signal, Slot
 from PySide6.QtGui import QColor, QDesktopServices, QFont, QImage, QPainter, QPen
 from PySide6.QtWidgets import (
-    QApplication, QComboBox, QDoubleSpinBox, QFileDialog, QFrame,
+    QApplication, QComboBox, QDialog, QDoubleSpinBox, QFileDialog, QFrame,
     QGroupBox, QHBoxLayout, QInputDialog, QLabel, QLineEdit, QListWidgetItem,
     QMainWindow, QMessageBox, QProgressBar, QScrollArea, QSizePolicy, QSlider,
     QSpinBox, QSplitter, QTabWidget, QVBoxLayout, QWidget,
 )
 
-from . import __version__, analyze, backends, esrgan, pipeline, ui, video_io
+from . import __version__, addons, analyze, backends, esrgan, pipeline, ui, video_io
 from . import face as face_mod
 from . import photo as photo_mod
 from .cli import output_name
@@ -1004,6 +1004,111 @@ class PhotoPanel(QWidget):
             QDesktopServices.openUrl(QUrl.fromLocalFile(d))
 
 
+# ── 추가 구성요소 ──────────────────────────────────────────────────────────
+
+class AddonsDialog(QDialog):
+    """FFmpeg 과 얼굴 복원 모델은 함께 배포하지 않으므로, 사용자가 여기서 공식 제공처에서 받는다."""
+    progress = Signal(int, int)
+    finished_job = Signal(str, bool, str)  # 구성요소, 성공 여부, 오류 내용
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.setWindowTitle("추가 구성요소")
+        self.setMinimumWidth(560)
+        self._cancel = threading.Event()
+        self._busy = False
+        v = QVBoxLayout(self)
+        v.setSpacing(10)
+        v.addWidget(note("이 두 가지는 라이선스 때문에 프로그램에 넣지 않았습니다. 필요한 것만 공식 제공처에서 받으세요."))
+
+        v.addWidget(self._title("FFmpeg (영상 처리에 필수, 사진만 다루면 없어도 됨)"))
+        self.ff_state = QLabel()
+        v.addWidget(self.ff_state)
+        v.addWidget(self._link("winget 으로 Gyan.FFmpeg 을 설치합니다. 새 창에서 약관을 확인하고 동의해 주세요. "
+                               f'<a href="{addons.FFMPEG_LICENSE_URL}">FFmpeg 라이선스</a>'))
+        self.ff_btn = button("FFmpeg 설치")
+        self.ff_btn.clicked.connect(self._install_ffmpeg)
+        v.addWidget(self.ff_btn)
+
+        v.addWidget(self._title("얼굴 복원 모델 GFPGAN 1.4 (선택, 약 340MB)"))
+        self.face_state = QLabel()
+        v.addWidget(self.face_state)
+        v.addWidget(self._link("비상업 조건이 관련된 모델입니다. <b>개인적·비상업적 용도로만</b> 사용해 주세요. "
+                               f'<a href="{addons.GFPGAN_LICENSE_URL}">GFPGAN 라이선스</a>'))
+        self.face_btn = button("동의하고 받기")
+        self.face_btn.clicked.connect(self._download_face)
+        v.addWidget(self.face_btn)
+        self.bar = QProgressBar()
+        self.bar.hide()
+        v.addWidget(self.bar)
+
+        v.addWidget(self._link(f'설치가 안 되면 <a href="{addons.SETUP_GUIDE_URL}">설치 안내</a>를 참고하세요.'))
+        close = button("닫기")
+        close.clicked.connect(self.close)
+        v.addWidget(close, alignment=Qt.AlignmentFlag.AlignRight)
+        self.progress.connect(self._on_progress)
+        self.finished_job.connect(self._on_finished)
+        self._refresh()
+
+    @staticmethod
+    def _title(text):
+        lbl = QLabel(text)
+        lbl.setStyleSheet("font-weight:700;margin-top:8px")
+        return lbl
+
+    @staticmethod
+    def _link(text):
+        lbl = note(text)
+        lbl.setOpenExternalLinks(True)
+        return lbl
+
+    def _refresh(self):
+        ff, face = addons.ffmpeg_ready(), addons.face_ready()
+        self.ff_state.setText("상태: 사용 가능" if ff else "상태: 설치되지 않음")
+        self.face_state.setText("상태: 사용 가능" if face else "상태: 받지 않음")
+        self.ff_btn.setEnabled(not ff and not self._busy and addons.can_use_winget())
+        self.face_btn.setEnabled(not face and not self._busy)
+
+    def _start(self, name, job):
+        self._busy = True
+        self._refresh()
+
+        def run():
+            try:
+                self.finished_job.emit(name, job(), "")
+            except Exception as e:  # 네트워크·디스크 오류를 창에 보여 준다
+                logging.exception("추가 구성요소 처리 실패")
+                self.finished_job.emit(name, False, str(e))
+        threading.Thread(target=run, daemon=True).start()
+
+    def _install_ffmpeg(self):
+        self._start("FFmpeg", addons.install_ffmpeg)
+
+    def _download_face(self):
+        self.bar.setRange(0, 0)
+        self.bar.show()
+        self._start("얼굴 복원 모델", lambda: addons.download_gfpgan(self.progress.emit, self._cancel.is_set))
+
+    @Slot(int, int)
+    def _on_progress(self, done, total):
+        if total:
+            self.bar.setRange(0, 1000)
+            self.bar.setValue(int(done / total * 1000))
+
+    @Slot(str, bool, str)
+    def _on_finished(self, name, ok, error):
+        self._busy = False
+        self.bar.hide()
+        self._refresh()
+        self.parent().addons_changed()
+        if error or (not ok and not self._cancel.is_set()):
+            QMessageBox.warning(self, "추가 구성요소", f"{name} 을(를) 준비하지 못했습니다.\n{error}".strip())
+
+    def closeEvent(self, e):
+        self._cancel.set()
+        super().closeEvent(e)
+
+
 # ── 메인 창 ────────────────────────────────────────────────────────────────
 
 class MainWindow(QMainWindow):
@@ -1056,10 +1161,15 @@ class MainWindow(QMainWindow):
         # 저작권 표시 + 정보
         about = button("정보", "info", "ghost")
         about.clicked.connect(self._about)
-        mark = QLabel(f"v{__version__}  ·  © 2026 최승훈. All rights reserved.")
+        addons_btn = button("추가 구성요소", None, "ghost")
+        addons_btn.clicked.connect(self._show_addons)
+        mark = QLabel(f"v{__version__} 베타  ·  © 2026 최승훈. All rights reserved.")
         mark.setStyleSheet(f"color:{ui.FAINT};font-size:8.5pt;padding-right:6px")
         self.statusBar().addPermanentWidget(mark)
+        self.statusBar().addPermanentWidget(addons_btn)
         self.statusBar().addPermanentWidget(about)
+        if not addons.ffmpeg_ready() or not (addons.face_ready() or self.cfg.get("addons_seen")):
+            QTimer.singleShot(0, self._show_addons)  # 처음 실행할 때 한 번, FFmpeg 이 없으면 매번 안내
 
         self._apply_settings(pipeline.Settings.from_dict(self.cfg.get("settings", {})))
         self.out_dir.setText(self.cfg.get("out_dir", ""))
@@ -2006,15 +2116,23 @@ class MainWindow(QMainWindow):
         except OSError:
             pass  # 읽기 전용 위치에서 실행해도 동작은 하도록
 
+    def _show_addons(self):
+        self.cfg["addons_seen"] = True
+        AddonsDialog(self).exec()
+
+    def addons_changed(self):
+        self.face_enhance.setEnabled(face_mod.available())
+        self.photo.face_enhance.setEnabled(face_mod.available())
+
     def _about(self):
         QMessageBox.about(
             self, "정보",
-            f"<b>AI 영상·사진 업스케일러</b> v{__version__}<br><br>"
+            f"<b>AI 영상·사진 업스케일러</b> v{__version__} 베타<br><br>"
             "Copyright © 2026 최승훈. All rights reserved.<br><br>"
             "소스 코드는 공개되어 있지만 오픈소스가 아니며, 저작권자의 서면 허락 없이<br>"
             "수정·재배포·상업적 이용을 할 수 없습니다. 자세한 내용은 "
             "<i>LICENSE.txt</i> 를 참고하세요.<br><br>"
-            "함께 배포되는 오픈소스 구성 요소(FFmpeg, Qt/PySide6, OpenVINO, OpenCV, AI 모델 등)는<br>"
+            "오픈소스 구성 요소(FFmpeg, Qt/PySide6, OpenVINO, OpenCV, AI 모델 등)는<br>"
             "각자의 라이선스를 따르며 위 제한을 받지 않습니다 — <i>THIRD_PARTY_NOTICES.txt</i> 참고.")
 
     def closeEvent(self, e):

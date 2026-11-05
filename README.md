@@ -17,9 +17,12 @@
 
 ## 사용 방법
 
-**[설치 방법과 사용 설명서는 Wiki에 있습니다.](https://github.com/seunghunchoi-dev/ai-upscaler/wiki)**
+1. [Releases](https://github.com/seunghunchoi-dev/ai-upscaler/releases) 에서 최신 베타 설치 파일을 받아 실행합니다.
+2. 처음 실행할 때 나오는 **추가 구성요소** 창에서 FFmpeg과 얼굴 복원 모델을 받습니다.
 
-저장소에는 프로그램 소스만 들어 있습니다. AI 모델과 FFmpeg은 각자의 라이선스를 따르는 별도 프로그램이므로 [설치 안내](https://github.com/seunghunchoi-dev/ai-upscaler/wiki/설치-및-실행)를 따라 공식 제공처에서 받아 주세요.
+두 구성요소는 라이선스 때문에 설치 파일에 넣지 않았으며, 사용자가 공식 제공처에서 직접 받습니다.
+
+**[자세한 설치 방법과 사용 설명서는 Wiki에 있습니다.](https://github.com/seunghunchoi-dev/ai-upscaler/wiki)**
 
 ## 라이선스
 

@@ -21,8 +21,13 @@ def find_tool(name):
     found = shutil.which(name)
     if found:
         return found
+    # winget 으로 방금 설치하면 실행 중인 프로그램의 PATH 에는 아직 없다
+    for base, sub in (("LOCALAPPDATA", "Microsoft/WinGet/Links"), ("ProgramFiles", "WinGet/Links")):
+        link = Path(os.environ.get(base, "")) / sub / exe
+        if os.environ.get(base) and link.exists():
+            return str(link)
     raise FileNotFoundError(
-        f"{name} 을(를) 찾을 수 없습니다. bin 폴더에 {exe} 를 넣어 주세요."
+        f"{name} 을(를) 찾을 수 없습니다. 프로그램 오른쪽 아래 [추가 구성요소] 에서 설치해 주세요."
     )
 
 
