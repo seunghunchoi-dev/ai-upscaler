@@ -2160,7 +2160,7 @@ def _setup_logging():
     logging.basicConfig(stream=log_file, level=logging.INFO,
                         format="%(asctime)s %(levelname)s %(message)s")
     if os.environ.get("VUP_DEBUG"):
-        # 디버그 모드(콘솔 실행): 오류를 콘솔에도 바로 보여 준다 (화면을 그대로 Claude 에게 전달하면 됨)
+        # 디버그 모드(콘솔 실행): 오류를 콘솔에도 바로 보여 준다
         console = logging.StreamHandler(sys.__stderr__ or sys.stderr)
         console.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
         logging.getLogger().addHandler(console)

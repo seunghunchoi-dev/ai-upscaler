@@ -1,5 +1,5 @@
 @echo off
-rem 설치 파일 다시 만들기 (Claude 없이 실행 가능, 약 10분)
+rem 설치 파일 다시 만들기 (약 10분)
 rem 1) vup\__init__.py 의 __version__ 을 올린 뒤  2) 이 파일을 더블클릭
 chcp 65001 >nul
 cd /d "%~dp0"

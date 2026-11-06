@@ -3,7 +3,7 @@
 #
 # 사용법:  powershell -ExecutionPolicy Bypass -File tools\build_installer.ps1
 # 결과:    dist\installer\AI업스케일러_설치_v<버전>.exe
-#          release\v<버전>\  (그 버전의 소스 사본 + 빌드 정보 — 나중에 Claude 로 디버깅할 때 사용)
+#          release\v<버전>\  (그 버전의 소스 사본 + 빌드 정보)
 #
 # 보호: 프로그램 코드(vup)는 Nuitka 로 C → 기계어 컴파일한 .pyd 하나로만 배포하고 .py 소스는 넣지 않는다.
 # MinGW 컴파일러가 한글 경로를 처리하지 못해서 C:\vupbuild (영문 경로)에서 컴파일한다.
